@@ -8,7 +8,7 @@ class RsaKey
 {
 public:
 	BIGNUM * e, *n, *d, *p, *q, *exp1, *exp2, *coefficient, *phi;
-	int bits_;
+	int half_bits_;
 	RsaKey();
 	RsaKey(int bits);
 	RsaKey(char* path, int mode);

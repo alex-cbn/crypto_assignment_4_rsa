@@ -132,7 +132,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="1.txt" />
-    <Text Include="rsa.txt" />
+    <Text Include="secret.txt" />
     <Text Include="TODO.txt" />
   </ItemGroup>
   <ItemGroup>

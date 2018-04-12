@@ -29,9 +29,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="rsa.txt" />
     <Text Include="1.txt" />
     <Text Include="TODO.txt" />
+    <Text Include="secret.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RsaKey.h">

@@ -7,7 +7,7 @@
 unsigned char* RsaCrypt::Encrypt(unsigned char* input, unsigned int length, RsaKey *key)
 {
 	//preliminary stuff
-	int max_length = key->bits_ / 4; // cause it's bits_*2/8
+	int max_length = key->half_bits_ / 4; // cause it's bits_*2/8
 	if (length + 11 > max_length)//checking length for padding
 	{
 		printf("Too much data for me\n");
@@ -51,10 +51,10 @@ unsigned char* RsaCrypt::Encrypt(unsigned char* input, unsigned int length, RsaK
 	return output;
 }
 
-unsigned char * RsaCrypt::Decrypt(unsigned char * input, unsigned int length, RsaKey * key)
+unsigned char * RsaCrypt::Decrypt(unsigned char * input, unsigned int length, RsaKey * key, unsigned int* decrypted_data_length)
 {
 	//preliminary stuff
-	int max_length = key->bits_ / 4; // cause it's bits_*2/8
+	int max_length = key->half_bits_ / 4; // cause it's bits_*2/8
 	if (length> max_length)
 	{
 		printf("Too much data for me\n");
@@ -92,5 +92,6 @@ unsigned char * RsaCrypt::Decrypt(unsigned char * input, unsigned int length, Rs
 	//BN_asc2bn(&m, "123");
 	//BN_mod_exp(c, m, key->e, key->n, ctx);
 	//BN_mod_exp(c, c, key->d, key->n, ctx);//if only c was now the same as m :(
+	*decrypted_data_length = max_length - offset - 1;
 	return output+offset;
 }

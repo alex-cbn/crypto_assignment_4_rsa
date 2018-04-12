@@ -16,7 +16,7 @@ RsaKey::RsaKey(int bits)
 {
 	Initialize();
 	GenerateKey(bits);
-	bits_ = bits;
+	half_bits_ = bits;
 }
 
 RsaKey::RsaKey(char * path, int mode)
@@ -36,7 +36,7 @@ RsaKey::RsaKey(int bits, int exponent)
 {
 	Initialize();
 	GenerateKey(bits, exponent);
-	bits_ = bits;
+	half_bits_ = bits;
 }
 
 void RsaKey::Initialize()
@@ -54,30 +54,26 @@ void RsaKey::Initialize()
 
 int RsaKey::WritePrivateKeyToFile(char* path)
 {
+	//This alternative way does not seem to work...
+	//The program exits at line 75
+	/*FILE* fp = fopen(path, "w");
+	RSA* rsa_wrap = new RSA();
+	rsa_wrap->version;
+	rsa_wrap->d = d;
+	rsa_wrap->e = e;
+	rsa_wrap->n = n;
+	rsa_wrap->dmp1 = exp1;
+	rsa_wrap->dmq1 = exp2;
+	rsa_wrap->iqmp = coefficient;
+	rsa_wrap->p = p;
+	rsa_wrap->q = q;
+	rsa_wrap->bignum_data = NULL;
+	BIGNUM* test = BN_new();
+	BN_CTX* ctx = BN_CTX_new();
+	BN_CTX_start(ctx);
+	BN_mul(test, p, q, ctx);
+	PEM_write_RSAPrivateKey(fp, rsa_wrap, 0, 0, 0, 0, 0);*/
 	FILE* fp = fopen(path, "w");
-	//int written_bytes = 0;
-	//char dump_to_file[4096];
-	//memset(dump_to_file, 0, 4096);
-	//Helper::AppendEncodedBn(n, dump_to_file, written_bytes);
-	//Helper::AppendEncodedBn(e, dump_to_file, written_bytes);
-	//Helper::AppendEncodedBn(p, dump_to_file, written_bytes);
-	//Helper::AppendEncodedBn(q, dump_to_file, written_bytes);
-	//Helper::AppendEncodedBn(exp1, dump_to_file, written_bytes);
-	//Helper::AppendEncodedBn(exp2, dump_to_file, written_bytes);
-	//Helper::AppendEncodedBn(coefficient, dump_to_file, written_bytes);
-	//
-	////calculate sequence header
-	//int sequence_length_length = 0;
-	//int sequence_length = written_bytes;
-	//char* encoded_sequence_length = Helper::lengthEncode(sequence_length, &sequence_length_length);
-	////write sequence header
-	//fwrite("\x30", 1, 1, fp);
-	////write sequence length
-	//fwrite(encoded_sequence_length, 1, sequence_length_length, fp);
-	////write raw data
-	//fwrite(dump_to_file, 1, written_bytes, fp);
-	//ANGHELIZA S WAE
-	unsigned char* der_encoded = nullptr;
 	RSA* rsa_wrapper = new RSA;
 	rsa_wrapper->version = 0;
 	rsa_wrapper->d = d;
@@ -100,33 +96,92 @@ int RsaKey::WritePrivateKeyToFile(char* path)
 
 int RsaKey::ReadPrivateKeyFromFile(char* path)
 {
+	RSA* rsa_wrapper = nullptr;
+	FILE* fp = fopen(path, "r");
+	BIO *bio = BIO_new(BIO_s_mem());
+	unsigned char* buffer = (unsigned char*)malloc(40960);
+	memset(buffer, 0, 40960);
+	
+	//read key from file in a buffer
+	int key_length = fread(buffer, 1, 40960, fp);
+	fclose(fp);
+
+	//read bio from buffer into bio
+	BIO_write(bio, buffer, key_length);
+	//read RSA from bio
+	PEM_read_bio_RSAPrivateKey(bio, &rsa_wrapper, 0, 0);
+
+	//transfer data from RSA structure to key
+	d = rsa_wrapper->d;
+	e = rsa_wrapper->e;
+	n = rsa_wrapper->n;
+	p = rsa_wrapper->p;
+	q = rsa_wrapper->q;
+	exp1 = rsa_wrapper->dmp1;
+	exp2 = rsa_wrapper->dmq1;
+	coefficient = rsa_wrapper->iqmp;
+	//maybe calculate phi
+	
+	//get them bits
+	half_bits_ = BN_num_bits(n)/2;
+
 	return 0;
 }
 
 int RsaKey::WritePublicKeyToFile(char * path)
 {
 	FILE* fp = fopen(path, "w");
-
-	int written_bytes = 0;
-	char dump_to_file[4096];
-	memset(dump_to_file, 0, 4096);
-
-	Helper::AppendEncodedBn(n, dump_to_file, written_bytes);
-	Helper::AppendEncodedBn(e, dump_to_file, written_bytes);
-
-	//calculate sequence header
-	int sequence_length_length = 0;
-	int sequence_length = written_bytes;
-	char* encoded_sequence_length = Helper::lengthEncode(sequence_length, &sequence_length_length);
-	fwrite("\x30", 1, 1, fp);
-	fwrite(encoded_sequence_length, 1, sequence_length_length, fp);
-	fwrite(dump_to_file, 1, written_bytes, fp);
+	RSA* rsa_wrapper = new RSA;
+	rsa_wrapper->version = 0;
+	rsa_wrapper->d = d;
+	rsa_wrapper->e = e;
+	rsa_wrapper->n = n;
+	rsa_wrapper->p = p;
+	rsa_wrapper->q = q;
+	rsa_wrapper->dmp1 = exp1;
+	rsa_wrapper->dmq1 = exp2;
+	rsa_wrapper->iqmp = coefficient;
+	BIO *bio = BIO_new(BIO_s_mem());
+	PEM_write_bio_RSAPublicKey(bio, rsa_wrapper);
+	int key_length = BIO_pending(bio);
+	unsigned char* buffer = (unsigned char*)malloc(key_length + 1);
+	BIO_read(bio, buffer, key_length);
+	fwrite(buffer, 1, key_length, fp);
 	fclose(fp);
 	return 0;
 }
 
 int RsaKey::ReadPublicKeyFromFile(char * path)
 {
+	RSA* rsa_wrapper = nullptr;
+	FILE* fp = fopen(path, "r");
+	BIO *bio = BIO_new(BIO_s_mem());
+	unsigned char* buffer = (unsigned char*)malloc(40960);
+	memset(buffer, 0, 40960);
+
+	//read key from file in a buffer
+	int key_length = fread(buffer, 1, 40960, fp);
+	fclose(fp);
+
+	//read bio from buffer into bio
+	BIO_write(bio, buffer, key_length);
+	//read RSA from bio
+	PEM_read_bio_RSAPublicKey(bio, &rsa_wrapper, 0, 0);
+
+	//transfer data from RSA structure to key
+	d = rsa_wrapper->d;
+	e = rsa_wrapper->e;
+	n = rsa_wrapper->n;
+	p = rsa_wrapper->p;
+	q = rsa_wrapper->q;
+	exp1 = rsa_wrapper->dmp1;
+	exp2 = rsa_wrapper->dmq1;
+	coefficient = rsa_wrapper->iqmp;
+	//maybe calculate phi
+
+	//get them bits
+	half_bits_ = BN_num_bits(n)/2;
+
 	return 0;
 }
 
