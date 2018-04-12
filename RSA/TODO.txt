@@ -1,28 +1,9 @@
-fix key dumping:
-read keys from file
+KNOWN BUGS to FIX
+*chiphered file is 1 byte longer than normal
+	although in debugger the value of output's length is 256 the file stubornly has 257 bytes
 
-ASN1_SIMPLE(ceva, chestia, type)
-ASN1_INTEGER_SET
-remove 
-exista BN_to_ASN1_INTEGER
+*chiphered file is not checked properly for length then or something
 
-//era facute deja
-//DECLARE_ASN1_FUNCTIONS
-//ASN1_SEQUENCE
-//ERR_load_crypto_strings();
-//ulint ERR_get_errorr()
-//ERR_get_String(err, nULL)
-//print error sau ceva, mai precis: 
 
-//i2d
-
-//trebuie encodat si oid inainte de scrierea in fisier
-//bit string
-//PEM write
-/*
-d2i decode fast! FAST!
-
-pkcs1.5 eme
-primu 00 al doilea 02 dupa padding dupa 00 dupa datele
-padding e lunng(n)-cat e mesaju-3(adica aia 3 octeti)
-lung lui mesaj<=lung n - 11 ca sa ai loc de padding *
+*public key can't be read by openssl and for the aforementioned reason chiphertext can not be 
+decrypted by openssl although the key seems to be proper even by openssl standards

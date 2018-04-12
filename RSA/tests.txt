@@ -1,0 +1,3 @@
+encrypt 1.pubkey secret.txt c.rsa
+decrypt 1.prvkey c.rsa p.txt
+genkey 3 1024 1.prvkey 1.pubkey

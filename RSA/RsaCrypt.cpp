@@ -42,11 +42,6 @@ unsigned char* RsaCrypt::Encrypt(unsigned char* input, unsigned int length, RsaK
 	BN_mod_exp(in, in, key->e, key->n, ctx);
 	//writing the output
 	BN_bn2bin(in, output);
-	/*writing the output to asn1
-	unsigned char* output = nullptr;
-	ASN1_INTEGER out_asn1;
-	BN_to_ASN1_INTEGER(in, &out_asn1);
-	i2d_ASN1_INTEGER(&out_asn1, &output);*/
 
 	return output;
 }
@@ -87,11 +82,6 @@ unsigned char * RsaCrypt::Decrypt(unsigned char * input, unsigned int length, Rs
 		}
 		offset++;
 	}
-	//BIGNUM* m = BN_new();
-	//BIGNUM* c = BN_new();
-	//BN_asc2bn(&m, "123");
-	//BN_mod_exp(c, m, key->e, key->n, ctx);
-	//BN_mod_exp(c, c, key->d, key->n, ctx);//if only c was now the same as m :(
 	*decrypted_data_length = max_length - offset - 1;
 	return output+offset;
 }
