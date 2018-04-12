@@ -6,6 +6,7 @@
 #include <openssl\x509.h>
 #include <openssl\pem.h>
 #include "Helper.h"
+#include <openssl\rsa.h>
 
 RsaKey::RsaKey()
 {
@@ -74,7 +75,7 @@ int RsaKey::WritePrivateKeyToFile(char* path)
 	BN_mul(test, p, q, ctx);
 	PEM_write_RSAPrivateKey(fp, rsa_wrap, 0, 0, 0, 0, 0);*/
 	FILE* fp = fopen(path, "w");
-	RSA* rsa_wrapper = new RSA;
+	RSA* rsa_wrapper = RSA_new();
 	rsa_wrapper->version = 0;
 	rsa_wrapper->d = d;
 	rsa_wrapper->e = e;
@@ -120,6 +121,9 @@ int RsaKey::ReadPrivateKeyFromFile(char* path)
 	exp1 = rsa_wrapper->dmp1;
 	exp2 = rsa_wrapper->dmq1;
 	coefficient = rsa_wrapper->iqmp;
+	//check RSA key
+	RSA_check_key(rsa_wrapper);
+
 	//maybe calculate phi
 	
 	//get them bits
@@ -131,7 +135,7 @@ int RsaKey::ReadPrivateKeyFromFile(char* path)
 int RsaKey::WritePublicKeyToFile(char * path)
 {
 	FILE* fp = fopen(path, "w");
-	RSA* rsa_wrapper = new RSA;
+	RSA* rsa_wrapper = RSA_new();
 	rsa_wrapper->version = 0;
 	rsa_wrapper->d = d;
 	rsa_wrapper->e = e;
@@ -142,7 +146,7 @@ int RsaKey::WritePublicKeyToFile(char * path)
 	rsa_wrapper->dmq1 = exp2;
 	rsa_wrapper->iqmp = coefficient;
 	BIO *bio = BIO_new(BIO_s_mem());
-	PEM_write_bio_RSAPublicKey(bio, rsa_wrapper);
+	PEM_write_bio_RSA_PUBKEY(bio, rsa_wrapper);
 	int key_length = BIO_pending(bio);
 	unsigned char* buffer = (unsigned char*)malloc(key_length + 1);
 	BIO_read(bio, buffer, key_length);
@@ -166,7 +170,7 @@ int RsaKey::ReadPublicKeyFromFile(char * path)
 	//read bio from buffer into bio
 	BIO_write(bio, buffer, key_length);
 	//read RSA from bio
-	PEM_read_bio_RSAPublicKey(bio, &rsa_wrapper, 0, 0);
+	PEM_read_bio_RSA_PUBKEY(bio, &rsa_wrapper, 0, 0);
 
 	//transfer data from RSA structure to key
 	d = rsa_wrapper->d;
