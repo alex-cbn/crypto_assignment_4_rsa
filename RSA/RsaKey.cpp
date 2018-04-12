@@ -76,19 +76,24 @@ int RsaKey::WritePrivateKeyToFile(char* path)
 	//fwrite(encoded_sequence_length, 1, sequence_length_length, fp);
 	////write raw data
 	//fwrite(dump_to_file, 1, written_bytes, fp);
+	//ANGHELIZA S WAE
 	unsigned char* der_encoded = nullptr;
-	RSA rsa_wrapper;
-	rsa_wrapper.d = d;
-	rsa_wrapper.e = e;
-	rsa_wrapper.n = n;
-	rsa_wrapper.p = p;
-	rsa_wrapper.q = q;
-	rsa_wrapper.dmp1 = exp1;
-	rsa_wrapper.dmq1 = exp2;
-	rsa_wrapper.iqmp = coefficient;
-	int length = i2d_RSAPrivateKey(&rsa_wrapper, &der_encoded);
-	fwrite(der_encoded, 1, length, fp);
-	//PEM_write_RSAPrivateKey(fp, &rsa_wrapper, NULL, NULL, NULL, NULL, NULL);
+	RSA* rsa_wrapper = new RSA;
+	rsa_wrapper->version = 0;
+	rsa_wrapper->d = d;
+	rsa_wrapper->e = e;
+	rsa_wrapper->n = n;
+	rsa_wrapper->p = p;
+	rsa_wrapper->q = q;
+	rsa_wrapper->dmp1 = exp1;
+	rsa_wrapper->dmq1 = exp2;
+	rsa_wrapper->iqmp = coefficient;
+	BIO *bio = BIO_new(BIO_s_mem());
+	PEM_write_bio_RSAPrivateKey(bio, rsa_wrapper, NULL, NULL, NULL, NULL, NULL);
+	int key_length = BIO_pending(bio);
+	unsigned char* buffer = (unsigned char*)malloc(key_length + 1);
+	BIO_read(bio, buffer, key_length);
+	fwrite(buffer, 1, key_length, fp);
 	fclose(fp);
 	return 0;
 }
